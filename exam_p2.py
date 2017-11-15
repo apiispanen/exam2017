@@ -12,6 +12,14 @@ def load_wordlist(file_name):
     in_file.close()
     return word_list
 
+def standardize(word):
+    word = word.lower()
+    punct = ("!@#$%^&*()-_+={}[]|\:;''<>?,./\"")
+    for thing in punct:
+        word = word.replace(thing, "")
+    return word
+
+
 
 ### DO NOT MODIFY THIS FUNCTION ###
 def is_a_valid_word(word_list, word):
@@ -19,9 +27,8 @@ def is_a_valid_word(word_list, word):
     Returns: True if word is in word_list, False otherwise
     '''
     word = word.lower()
-    word = word.strip(" !@#$%^&*()-_+={}[]|\:;'<>?,./\"")
+    word = word.strip("!@#$%^&*()-_+={ }[]|\:;'<>?,./\"")
     return word in word_list
-
 
 ### DO NOT MODIFY THIS FUNCTION ###
 def get_joke_string():
@@ -34,7 +41,6 @@ def get_joke_string():
     return joke
 
 WORDLIST_FILENAME = 'words.txt'
-
 
 class Text(object):
 
@@ -74,8 +80,14 @@ class Text(object):
         Example: an_instance_of_Text.create_moved_dict(2) would generate
         {'a': 'c', 'b': 'd', 'c':'e', ...}  
         '''
-        pass  # delete this line and replace with your code here
-
+        dictionary_letters = 'abcdefghijklmnopqrstuvwxyz'
+        moved_dict = {}
+        i=0
+        
+        for letter in dictionary_letters:
+            moved_dict[dictionary_letters[i-move]] = letter
+            i+=1
+        return moved_dict
 
     ### YOU NEED TO MODIFY THIS METHOD ###
     def apply_move(self, move):
@@ -87,13 +99,33 @@ class Text(object):
         Returns: the text (string) in which every character is moved
              down the alphabet by the input move
         '''
-        pass  # delete this line and replace with your code here
-
+        
+        dictionary_letters = 'abcdefghijklmnopqrstuvwxyz'
+        moved_dict = {}
+        i=0
+        
+        for letter in dictionary_letters:
+            moved_dict[dictionary_letters[i-move]] = letter
+            i+=1
+        new_word = []
+        i=0
+        for letter in self:
+            new_word.append(moved_dict[letter])
+        new_word = ''.join(new_word)
+        text = new_word
+        return text
 
 class PlainText(Text):
 
     ### YOU NEED TO MODIFY THIS METHOD ###
     def __init__(self, text, move):
+        text= str(text)
+        move = int(move)
+        self.text  = text
+        self.valid_words = load_wordlist('words.txt')
+        self.move = move
+        self.encrypting_dict = PlainText.create_moved_dict(text,move)
+        self.encrypted_text = PlainText.apply_move(text,move)
         '''
         Initializes a PlainText object        
 
@@ -110,7 +142,6 @@ class PlainText(Text):
         Note: you must use the parent class constructor(__init__ function) 
         so less code is repeated
         '''
-        pass  # delete this line and replace with your code here
 
 
     ### YOU NEED TO MODIFY THIS METHOD ###
@@ -120,7 +151,7 @@ class PlainText(Text):
 
         Returns: self.move
         '''
-        pass  # delete this line and replace with your code here
+        return self.move # delete this line and replace with your code here
 
 
     ### YOU NEED TO MODIFY THIS METHOD ###
@@ -130,7 +161,7 @@ class PlainText(Text):
 
         Returns: a COPY of self.encrypting_dict
         '''
-        pass  # delete this line and replace with your code here
+        return self.encrypting_dict.copy()  # delete this line and replace with your code here
 
 
     ### YOU NEED TO MODIFY THIS METHOD ###
@@ -140,7 +171,7 @@ class PlainText(Text):
 
         Returns: self.encrypted_text
         '''
-        pass  # delete this line and replace with your code here
+        return self.encrypted_text  # delete this line and replace with your code here
 
 
     ### YOU NEED TO MODIFY THIS METHOD ###
@@ -154,8 +185,10 @@ class PlainText(Text):
 
         Returns: nothing
         '''
-        pass  # delete this line and replace with your code here
-
+        move = int(move)
+        self.move = move  # delete this line and replace with your code here
+        self.encrypting_dict = PlainText.create_moved_dict(self,move)
+        self.encrypted_text = PlainText.apply_move(self,move)
 
 class CipherText(Text):
 
@@ -171,8 +204,9 @@ class CipherText(Text):
             self.text (string, determined by input text)
             self.valid_words (list, determined using helper function load_wordlist)
         '''
-        pass  # delete this line and replace with your code here
-
+        self.text = text 
+        self.valid_words = load_wordlist('words.txt')
+        
 
     ### YOU NEED TO MODIFY THIS METHOD ###
     def decrypt_text(self):
@@ -189,9 +223,41 @@ class CipherText(Text):
         test case in main function below.
 
         '''
-        pass  # delete this line and replace with your code here
-
-
+        
+        word_counts = []
+        final =[]
+        editedword = standardize(self.text)     
+        if " " in editedword:
+            for i in range(26):
+                word_count = 0
+                words = editedword.split()
+                for word in words:
+                    word = CipherText.apply_move(word,i) 
+                    if is_a_valid_word(self.valid_words,word):
+                        word_count+=1
+                word_counts.append(word_count)
+                i+=1
+            correct_cipher = word_counts.index(max(word_counts))
+            for word in editedword.split():
+                result = CipherText.apply_move(word,correct_cipher) 
+                final.append(result)
+            results = (correct_cipher, " ".join(final))  
+        
+        else:
+            for i in range(26):
+                words = CipherText.apply_move(editedword,i)
+                words = words.split()
+                word_count = 0
+                for word in words:
+                    if is_a_valid_word(self.valid_words,word):
+                        word_count+=1
+                word_counts.append(word_count)
+                i+=1
+            correct_cipher = word_counts.index(max(word_counts))
+            results = (correct_cipher, CipherText.apply_move(editedword,correct_cipher) )  
+        
+        return results 
+        
 
 ### DO NOT MODIFY THIS FUNCTION ###
 def decrypt_joke():
@@ -203,15 +269,18 @@ def decrypt_joke():
 def main():
     # Example test case (PlainText)
     plaintext = PlainText('hello', 2)
+    print(PlainText.create_moved_dict('hello',2))
+    print(PlainText.apply_move('hello',2))
     print('Expected Output: jgnnq')
     print('Actual Output:', plaintext.get_encrypted_text())
 
-    # Example test case (CipherText)
+    # # Example test case (CipherText)
     ciphertext = CipherText('jgnnq')
     print('Expected Output:', (24, 'hello'))
     print('Actual Output:', ciphertext.decrypt_text())
 
     print(decrypt_joke())
+
 
 if __name__ == '__main__':
     main()
