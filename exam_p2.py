@@ -1,4 +1,6 @@
 import string
+import os
+os.chdir('C:\\Users\\apiispanen\\Documents\\GitHub\\exam2017')
 
 ### DO NOT MODIFY THIS FUNCTION ###
 def load_wordlist(file_name):
